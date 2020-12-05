@@ -9,13 +9,11 @@ fn parse() -> Result<Vec<i32>, ParseIntError> {
 }
 
 fn find_pair(values: &Vec<i32>) -> Option<(i32, i32)> {
-    for i in values.iter() {
-        for j in values.iter().rev() {
-            if i + j == TARGET {
-                return Some((*i, *j));
-            } else if i + j < TARGET {
-                break;
-            }
+    for x in values.iter() {
+        let y = TARGET - x;
+
+        if let Ok(_) = values.binary_search(&y) {
+            return Some((*x, y));
         }
     }
 
@@ -23,24 +21,15 @@ fn find_pair(values: &Vec<i32>) -> Option<(i32, i32)> {
 }
 
 fn find_triplet(values: &Vec<i32>) -> Option<(i32, i32, i32)> {
-    let mut mid = values.len() as isize / 2;
-    let mut flip = -1;
+    for (i, x) in values.iter().enumerate() {
+        let (_, split) = values.split_at(i);
 
-    for i in 0..values.len() as isize {
-        mid += i * flip;
-        flip *= -1;
+        for (j, y) in split.iter().enumerate() {
+            let (_, split) = values.split_at(j);
+            let z = TARGET - x - y;
 
-        dbg!(mid);
-
-        let (left, right) = values.split_at(mid as usize);
-        let (cent, right) = right.split_at(1);
-        let pivot = &cent[0];
-
-        for j in left.iter() {
-            for k in right.iter().rev() {
-                if pivot + j + k == TARGET {
-                    return Some((*j, *pivot, *k));
-                }
+            if let Ok(_) = split.binary_search(&z) {
+                return Some((*x, *y, z));
             }
         }
     }
