@@ -1,0 +1,5 @@
+[package]
+name = "e20d04"
+version = "0.1.0"
+authors = ["Joakim Soderlund <joakim.soderlund@gmail.com>"]
+edition = "2018"
