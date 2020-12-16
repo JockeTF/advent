@@ -1,5 +1,4 @@
 use std::convert::TryInto;
-use std::mem::size_of;
 use std::str::FromStr;
 
 #[cfg(test)]
@@ -48,7 +47,7 @@ impl Seat {
 
         let len = slice.len();
 
-        if size_of::<u16>() * 8 <= len {
+        if len <= 0 || 16 <= len {
             panic!("Unsupported slice length");
         }
 
