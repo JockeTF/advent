@@ -15,43 +15,52 @@ const SAMPLE: &str = "
     acc +6
 ";
 
-macro_rules! assert_step {
-    ($m:expr, $pc:expr, $acc:expr, $ins:expr) => {
-        assert_eq!($m.program[$m.instruction as usize], $ins);
-        assert_eq!($m.step().unwrap(), ());
-        assert_eq!($acc, $m.accumulator);
-        assert_eq!($pc, $m.instruction);
-    };
+fn step(m: &mut Machine, pc: i32, acc: i32, ins: Instruction) {
+    assert_eq!(m.program[m.instruction as usize], ins);
+    assert_eq!(m.step(), Some(()));
+    assert_eq!(acc, m.accumulator);
+    assert_eq!(pc, m.instruction);
 }
 
 #[test]
 fn test_first() {
     use Instruction::*;
-
     let mut machine = Machine::from_str(SAMPLE).unwrap();
 
-    assert_step!(machine, 1, 0, Nop(0));
-    assert_step!(machine, 2, 1, Acc(1));
-    assert_step!(machine, 6, 1, Jmp(4));
-    assert_step!(machine, 7, 2, Acc(1));
-    assert_step!(machine, 3, 2, Jmp(-4));
-    assert_step!(machine, 4, 5, Acc(3));
-    assert_step!(machine, 1, 5, Jmp(-3));
+    let steps = [
+        (1, 0, Nop(0)),
+        (2, 1, Acc(1)),
+        (6, 1, Jmp(4)),
+        (7, 2, Acc(1)),
+        (3, 2, Jmp(-4)),
+        (4, 5, Acc(3)),
+        (1, 5, Jmp(-3)),
+    ];
+
+    for (pc, acc, ins) in steps {
+        step(&mut machine, pc, acc, ins);
+    }
 }
 
 #[test]
 fn test_second() {
     use Instruction::*;
-
     let mut machine = Machine::from_str(SAMPLE).unwrap();
 
     machine.swap(7);
 
-    assert_step!(machine, 1, 0, Nop(0));
-    assert_step!(machine, 2, 1, Acc(1));
-    assert_step!(machine, 6, 1, Jmp(4));
-    assert_step!(machine, 7, 2, Acc(1));
-    assert_step!(machine, 8, 2, Nop(-4));
-    assert_step!(machine, 9, 8, Acc(6));
+    let steps = [
+        (1, 0, Nop(0)),
+        (2, 1, Acc(1)),
+        (6, 1, Jmp(4)),
+        (7, 2, Acc(1)),
+        (8, 2, Nop(-4)),
+        (9, 8, Acc(6)),
+    ];
+
+    for (pc, acc, ins) in steps {
+        step(&mut machine, pc, acc, ins);
+    }
+
     assert_eq!(machine.step(), None);
 }
