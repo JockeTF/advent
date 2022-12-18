@@ -94,6 +94,7 @@ impl TryFrom<OptPassport> for RawPassport {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct Passport {
     byr: BirthYear,
