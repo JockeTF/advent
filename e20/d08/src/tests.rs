@@ -2,6 +2,8 @@ use std::str::FromStr;
 
 use crate::Instruction;
 use crate::Machine;
+use crate::Program;
+use crate::State;
 
 const SAMPLE: &str = "
     nop +0
@@ -15,17 +17,19 @@ const SAMPLE: &str = "
     acc +6
 ";
 
-fn step(m: &mut Machine, pc: i32, acc: i32, ins: Instruction) {
-    assert_eq!(m.program[m.instruction as usize], ins);
-    assert_eq!(m.step(), Some(()));
-    assert_eq!(acc, m.accumulator);
-    assert_eq!(pc, m.instruction);
+fn step(m: &mut Machine, pc: i32, ac: i32, ins: Instruction) {
+    assert_eq!(m.program.get(m.pc), Some(&ins));
+    assert!(matches!(m.step(), State::Running));
+    assert_eq!(ac, m.ac);
+    assert_eq!(pc, m.pc);
 }
 
 #[test]
 fn test_first() {
     use Instruction::*;
-    let mut machine = Machine::from_str(SAMPLE).unwrap();
+
+    let program = Program::from_str(SAMPLE).unwrap();
+    let mut machine = Machine::from(program);
 
     let steps = [
         (1, 0, Nop(0)),
@@ -34,20 +38,23 @@ fn test_first() {
         (7, 2, Acc(1)),
         (3, 2, Jmp(-4)),
         (4, 5, Acc(3)),
-        (1, 5, Jmp(-3)),
     ];
 
-    for (pc, acc, ins) in steps {
-        step(&mut machine, pc, acc, ins);
+    for (pc, ac, ins) in steps {
+        step(&mut machine, pc, ac, ins);
     }
+
+    assert!(matches!(machine.step(), State::Looping));
 }
 
 #[test]
 fn test_second() {
     use Instruction::*;
-    let mut machine = Machine::from_str(SAMPLE).unwrap();
 
-    machine.swap(7);
+    let mut program = Program::from_str(SAMPLE).unwrap();
+    program.swap(7, Nop(-4)).unwrap();
+
+    let mut machine = Machine::from(program);
 
     let steps = [
         (1, 0, Nop(0)),
@@ -62,5 +69,5 @@ fn test_second() {
         step(&mut machine, pc, acc, ins);
     }
 
-    assert_eq!(machine.step(), None);
+    assert!(matches!(machine.step(), State::Exiting));
 }

@@ -1,4 +1,8 @@
-use std::{num::ParseIntError, str::FromStr, collections::HashSet, mem::replace};
+use std::collections::HashSet;
+use std::fmt::Display;
+use std::mem::replace;
+use std::num::ParseIntError;
+use std::str::FromStr;
 
 #[cfg(test)]
 mod tests;
@@ -11,7 +15,7 @@ enum ParseError {
     InvalidValue(String),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum Instruction {
     Acc(i32),
     Jmp(i32),
@@ -19,10 +23,22 @@ enum Instruction {
 }
 
 #[derive(Clone, Debug)]
+struct Program(Vec<Instruction>);
+
+#[derive(Copy, Clone, Debug)]
+enum State {
+    Exiting,
+    Looping,
+    Running,
+}
+
+#[derive(Clone, Debug)]
 struct Machine {
-    accumulator: i32,
-    instruction: i32,
-    program: Vec<Instruction>,
+    ac: i32,
+    pc: i32,
+    program: Program,
+    seen: HashSet<i32>,
+    state: State,
 }
 
 impl From<ParseIntError> for ParseError {
@@ -49,87 +65,119 @@ impl FromStr for Instruction {
     }
 }
 
-impl FromStr for Machine {
+impl FromStr for Program {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let program = s
+        let ins = s
             .trim()
             .lines()
             .map(Instruction::from_str)
             .collect::<Result<Vec<_>, _>>()?;
 
-        Ok(Machine {
-            accumulator: 0,
-            instruction: 0,
-            program,
-        })
+        Ok(Program(ins))
+    }
+}
+
+impl Program {
+    fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    fn get(&self, index: impl TryInto<usize>) -> Option<&Instruction> {
+        self.0.get(index.try_into().ok()?)
+    }
+
+    fn swap(&mut self, index: impl TryInto<usize>, repl: Instruction) -> Option<Instruction> {
+        let index = index.try_into().ok()?;
+        let target = self.0.get_mut(index)?;
+
+        Some(replace(target, repl))
+    }
+}
+
+impl Display for Machine {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Machine({:?}[{}]: {})", self.state, self.pc, self.ac)
+    }
+}
+
+impl From<Program> for Machine {
+    fn from(value: Program) -> Self {
+        let capacity = value.len();
+
+        Machine {
+            ac: 0,
+            pc: 0,
+            program: value,
+            seen: HashSet::with_capacity(capacity),
+            state: State::Running,
+        }
     }
 }
 
 impl Machine {
-    fn step(&mut self) -> Option<()> {
+    fn step(&mut self) -> State {
         use Instruction::*;
 
-        let pc = usize::try_from(self.instruction).ok()?;
-        let op = self.program.get(pc)?;
+        let Some(op) = self.program.get(self.pc) else {
+            self.state = State::Exiting;
+            return self.state;
+        };
 
         match op {
             Acc(num) => {
-                self.accumulator += num;
-                self.instruction += 1;
+                self.ac += num;
+                self.pc += 1;
             }
-            Jmp(num) => self.instruction += num,
-            Nop(_) => self.instruction += 1,
+            Jmp(num) => self.pc += num,
+            Nop(_) => self.pc += 1,
         };
 
-        Some(())
-    }
-
-    fn swap(&mut self, pc: usize) -> Option<Instruction> {
-        use Instruction::*;
-
-        let repl = match self.program.get(pc)? {
-            Jmp(val) => Nop(*val),
-            Nop(val) => Jmp(*val),
-            Acc(val) => Acc(*val),
-        };
-
-        Some(replace(&mut self.program[pc], repl))
-    }
-
-    fn run(&mut self) -> (bool, i32, HashSet<i32>) {
-        let mut seen = HashSet::with_capacity(self.program.len());
-
-        while self.step().is_some() {
-            if !seen.insert(self.instruction) {
-                return (true, self.accumulator, seen);
-            }
+        if self.seen.insert(self.pc) {
+            self.state = State::Running;
+        } else {
+            self.state = State::Looping;
         }
 
-        (false, self.accumulator, seen)
+        self.state
+    }
+
+    fn run(&mut self) -> State {
+        while matches!(self.step(), State::Running) {}
+        self.state
     }
 }
 
 fn main() {
-    let template = Machine::from_str(INPUT).unwrap();
-    let mut machine = template.clone();
-    let (looped, acc, seen) = machine.run();
+    use Instruction::*;
 
-    println!("--- Loop  Check ---");
-    println!(" Accumulator: {acc}");
-    println!("      Looped: {looped}");
+    let program = Program::from_str(INPUT).unwrap();
+    let mut machine = Machine::from(program.clone());
 
-    for instruction in seen.iter() {
-        let mut machine = template.clone();
-        machine.swap(*instruction as usize);
-        let (looped, acc, _) = machine.run();
+    if !matches!(machine.run(), State::Looping) {
+        panic!("Initial program never looped");
+    }
 
-        if !looped {
-            println!("--- Loop  Break ---");
-            println!(" Accumulator: {acc}");
-            println!("     Swapped: {instruction}");
-            break;
+    println!("Original: {machine}");
+
+    for num in machine.seen.clone() {
+        let repl = match program.get(num) {
+            None => panic!("Invalid run"),
+            Some(Jmp(val)) => Nop(*val),
+            Some(Nop(val)) => Jmp(*val),
+            Some(_) => continue,
+        };
+
+        let mut trial = program.clone();
+        trial.swap(num, repl).unwrap();
+        machine = Machine::from(trial);
+
+        if matches!(machine.run(), State::Exiting) {
+            println!("Fix[{num}]: {machine}");
+            return;
         }
     }
+
+    panic!("Could not repair program");
 }
