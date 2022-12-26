@@ -27,9 +27,9 @@ struct Program(Vec<Instruction>);
 
 #[derive(Clone, Debug)]
 enum State {
-    Exiting,
-    Looping,
     Running,
+    Looping,
+    Exiting,
 }
 
 #[derive(Clone, Debug)]
