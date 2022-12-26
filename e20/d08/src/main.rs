@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::fmt::Display;
 use std::mem::replace;
 use std::num::ParseIntError;
@@ -15,7 +15,7 @@ enum ParseError {
     InvalidValue(String),
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum Instruction {
     Acc(i32),
     Jmp(i32),
@@ -25,7 +25,7 @@ enum Instruction {
 #[derive(Clone, Debug)]
 struct Program(Vec<Instruction>);
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 enum State {
     Exiting,
     Looping,
@@ -37,7 +37,7 @@ struct Machine {
     ac: i32,
     pc: i32,
     program: Program,
-    seen: HashSet<i32>,
+    seen: BTreeSet<i32>,
     state: State,
 }
 
@@ -80,10 +80,6 @@ impl FromStr for Program {
 }
 
 impl Program {
-    fn len(&self) -> usize {
-        self.0.len()
-    }
-
     fn get(&self, index: impl TryInto<usize>) -> Option<&Instruction> {
         self.0.get(index.try_into().ok()?)
     }
@@ -104,13 +100,11 @@ impl Display for Machine {
 
 impl From<Program> for Machine {
     fn from(value: Program) -> Self {
-        let capacity = value.len();
-
         Machine {
             ac: 0,
             pc: 0,
             program: value,
-            seen: HashSet::with_capacity(capacity),
+            seen: BTreeSet::new(),
             state: State::Running,
         }
     }
@@ -122,7 +116,7 @@ impl Machine {
 
         let Some(op) = self.program.get(self.pc) else {
             self.state = State::Exiting;
-            return self.state;
+            return self.state.clone();
         };
 
         match op {
@@ -140,12 +134,12 @@ impl Machine {
             self.state = State::Looping;
         }
 
-        self.state
+        self.state.clone()
     }
 
     fn run(&mut self) -> State {
         while matches!(self.step(), State::Running) {}
-        self.state
+        self.state.clone()
     }
 }
 
@@ -161,7 +155,7 @@ fn main() {
 
     println!("Original: {machine}");
 
-    for num in machine.seen.clone() {
+    for num in machine.seen {
         let repl = match program.get(num) {
             None => panic!("Invalid run"),
             Some(Jmp(val)) => Nop(*val),
