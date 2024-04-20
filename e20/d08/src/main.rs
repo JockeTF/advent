@@ -9,6 +9,7 @@ mod tests;
 
 const INPUT: &str = include_str!("input.txt");
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 enum ParseError {
     InvalidLine(String),

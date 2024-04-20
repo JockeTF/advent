@@ -3,9 +3,10 @@ use std::str::FromStr;
 #[cfg(test)]
 mod tests;
 
-const INPUT: &'static str = include_str!("input.txt");
+const INPUT: &str = include_str!("input.txt");
 const BOUND: u32 = 'a' as u32;
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct ParserError(&'static str);
 

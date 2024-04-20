@@ -6,8 +6,9 @@ use std::str::FromStr;
 #[cfg(test)]
 mod tests;
 
-const INPUT: &'static str = include_str!("input.txt");
+const INPUT: &str = include_str!("input.txt");
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct BagError(&'static str);
 
@@ -35,7 +36,7 @@ impl FromStr for BagType {
     type Err = BagError;
 
     fn from_str(s: &str) -> BagResult<Self> {
-        let split = s.trim().split_whitespace().collect::<Vec<&str>>();
+        let split = s.split_whitespace().collect::<Vec<&str>>();
 
         let [modifier, color, suffix] = match split[..] {
             [m, c, s] => Ok([m.trim(), c.trim(), s.trim()]),
@@ -72,7 +73,7 @@ impl FromStr for RulePair {
         let split = s
             .trim()
             .strip_suffix('.')
-            .ok_or_else(|| BagError("Missing pair suffix"))?
+            .ok_or(BagError("Missing pair suffix"))?
             .split("contain")
             .collect::<Vec<&str>>();
 
@@ -117,7 +118,7 @@ impl FromStr for RuleBook {
             .values()
             .flatten()
             .map(|val| map.contains_key(&val.0))
-            .fold(true, |acc, elem| acc && elem);
+            .all(|elem| elem);
 
         if !complete {
             Err(BagError("Found undefined keys"))
@@ -130,7 +131,7 @@ impl FromStr for RuleBook {
 }
 
 impl RuleBook {
-    fn invert<'a>(&'a self) -> HashMap<&'a BagType, HashSet<&'a BagType>> {
+    fn invert(&self) -> HashMap<&BagType, HashSet<&BagType>> {
         let keys = self.0.keys();
 
         let mut result = keys

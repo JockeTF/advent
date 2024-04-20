@@ -4,8 +4,9 @@ use std::str::FromStr;
 #[cfg(test)]
 mod tests;
 
-const INPUT: &'static str = include_str!("input.txt");
+const INPUT: &str = include_str!("input.txt");
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 struct ParserError(&'static str);
 
@@ -47,7 +48,7 @@ impl Seat {
 
         let len = slice.len();
 
-        if len <= 0 || 16 <= len {
+        if len == 0 || 16 <= len {
             panic!("Unsupported slice length");
         }
 

@@ -4,8 +4,9 @@ use std::str::FromStr;
 
 mod types;
 
-const INPUT: &'static str = include_str!("input.txt");
+const INPUT: &str = include_str!("input.txt");
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct ParserError(&'static str);
 
@@ -82,13 +83,13 @@ impl TryFrom<OptPassport> for RawPassport {
 
     fn try_from(value: OptPassport) -> ParserResult<Self> {
         Ok(RawPassport {
-            byr: value.byr.ok_or_else(|| ParserError("Missing byr value"))?,
-            iyr: value.iyr.ok_or_else(|| ParserError("Missing iyr value"))?,
-            eyr: value.eyr.ok_or_else(|| ParserError("Missing eyr value"))?,
-            hgt: value.hgt.ok_or_else(|| ParserError("Missing hgt value"))?,
-            hcl: value.hcl.ok_or_else(|| ParserError("Missing hcl value"))?,
-            ecl: value.ecl.ok_or_else(|| ParserError("Missing ecl value"))?,
-            pid: value.pid.ok_or_else(|| ParserError("Missing pid value"))?,
+            byr: value.byr.ok_or(ParserError("Missing byr value"))?,
+            iyr: value.iyr.ok_or(ParserError("Missing iyr value"))?,
+            eyr: value.eyr.ok_or(ParserError("Missing eyr value"))?,
+            hgt: value.hgt.ok_or(ParserError("Missing hgt value"))?,
+            hcl: value.hcl.ok_or(ParserError("Missing hcl value"))?,
+            ecl: value.ecl.ok_or(ParserError("Missing ecl value"))?,
+            pid: value.pid.ok_or(ParserError("Missing pid value"))?,
             cid: value.cid,
         })
     }

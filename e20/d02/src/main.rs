@@ -1,13 +1,15 @@
 use std::str::FromStr;
 
-const INPUT: &'static str = include_str!("input.txt");
+const INPUT: &str = include_str!("input.txt");
 
+#[allow(dead_code)]
 #[derive(Debug)]
 enum ErrorType {
     EntryError(&'static str),
     PolicyError(&'static str),
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct ParseError(ErrorType, usize);
 
@@ -33,7 +35,7 @@ impl FromStr for Policy {
             _ => Err(PolicyError("Invalid target divider")),
         }?;
 
-        let spec = spec.split("-").map(str::trim).collect::<Vec<_>>();
+        let spec = spec.split('-').map(str::trim).collect::<Vec<_>>();
 
         let (min, max) = match spec[..] {
             [min, max] => Ok((min, max)),
@@ -68,7 +70,7 @@ impl FromStr for Entry {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use ErrorType::EntryError;
 
-        let parts = s.split(":").map(str::trim).collect::<Vec<_>>();
+        let parts = s.split(':').map(str::trim).collect::<Vec<_>>();
 
         let (policy, password) = match parts[..] {
             [policy, password] => Ok((policy, password)),

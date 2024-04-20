@@ -1,18 +1,17 @@
 use std::num::ParseIntError;
 
+const INPUT: &str = include_str!("input.txt");
 const TARGET: i32 = 2020;
-
-const INPUT: &'static str = include_str!("input.txt");
 
 fn parse() -> Result<Vec<i32>, ParseIntError> {
     INPUT.lines().map(|line| line.parse::<i32>()).collect()
 }
 
-fn find_pair(values: &Vec<i32>) -> Option<(i32, i32)> {
+fn find_pair(values: &[i32]) -> Option<(i32, i32)> {
     for x in values.iter() {
         let y = TARGET - x;
 
-        if let Ok(_) = values.binary_search(&y) {
+        if values.binary_search(&y).is_ok() {
             return Some((*x, y));
         }
     }
@@ -20,7 +19,7 @@ fn find_pair(values: &Vec<i32>) -> Option<(i32, i32)> {
     None
 }
 
-fn find_triplet(values: &Vec<i32>) -> Option<(i32, i32, i32)> {
+fn find_triplet(values: &[i32]) -> Option<(i32, i32, i32)> {
     for (i, x) in values.iter().enumerate() {
         let (_, split) = values.split_at(i);
 
@@ -28,7 +27,7 @@ fn find_triplet(values: &Vec<i32>) -> Option<(i32, i32, i32)> {
             let (_, split) = values.split_at(j);
             let z = TARGET - x - y;
 
-            if let Ok(_) = split.binary_search(&z) {
+            if split.binary_search(&z).is_ok() {
                 return Some((*x, *y, z));
             }
         }

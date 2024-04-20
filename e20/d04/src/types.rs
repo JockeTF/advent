@@ -9,6 +9,7 @@ impl From<ParseIntError> for ParserError {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct BirthYear(u16);
 
@@ -18,7 +19,7 @@ impl FromStr for BirthYear {
     fn from_str(s: &str) -> ParserResult<Self> {
         let value = s.parse()?;
 
-        if 1920 <= value && value <= 2002 {
+        if (1920..=2002).contains(&value) {
             Ok(BirthYear(value))
         } else {
             Err(ParserError("Invalid byr range"))
@@ -26,6 +27,7 @@ impl FromStr for BirthYear {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct IssueYear(u16);
 
@@ -35,7 +37,7 @@ impl FromStr for IssueYear {
     fn from_str(s: &str) -> ParserResult<Self> {
         let value = s.parse()?;
 
-        if 2010 <= value && value <= 2020 {
+        if (2010..=2020).contains(&value) {
             Ok(IssueYear(value))
         } else {
             Err(ParserError("Invalid iyr range"))
@@ -43,6 +45,7 @@ impl FromStr for IssueYear {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct ExpirationYear(u16);
 
@@ -52,7 +55,7 @@ impl FromStr for ExpirationYear {
     fn from_str(s: &str) -> ParserResult<Self> {
         let value = s.parse()?;
 
-        if 2020 <= value && value <= 2030 {
+        if (2020..=2030).contains(&value) {
             Ok(ExpirationYear(value))
         } else {
             Err(ParserError("Invalid eyr range"))
@@ -60,6 +63,7 @@ impl FromStr for ExpirationYear {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum Height {
     Cm(u16),
@@ -72,22 +76,23 @@ impl FromStr for Height {
     fn from_str(s: &str) -> ParserResult<Self> {
         use Height::*;
 
-        let height = if s.ends_with("cm") {
-            Cm(s[..s.len() - 2].parse::<u16>()?)
-        } else if s.ends_with("in") {
-            In(s[..s.len() - 2].parse::<u16>()?)
+        let height = if let Some(cms) = s.strip_suffix("cm") {
+            Cm(cms.parse::<u16>()?)
+        } else if let Some(ins) = s.strip_suffix("in") {
+            In(ins.parse::<u16>()?)
         } else {
             return Err(ParserError("Invalid hgt format"));
         };
 
         match height {
-            Cm(n) if 150 <= n && n <= 193 => Ok(Cm(n)),
-            In(n) if 59 <= n && n <= 76 => Ok(In(n)),
+            Cm(n) if (150..=193).contains(&n) => Ok(Cm(n)),
+            In(n) if (59..=76).contains(&n) => Ok(In(n)),
             _ => Err(ParserError("Invalid hgt range")),
         }
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct HairColor(String);
 
@@ -147,6 +152,7 @@ impl FromStr for EyeColor {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct PassportId(String);
 
@@ -169,6 +175,7 @@ impl FromStr for PassportId {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct CountryId(String);
 
